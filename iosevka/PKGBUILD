@@ -3,7 +3,7 @@ pkgver=2.1.0
 pkgrel=1
 pkgdesc='Slender typeface for code'
 arch=('any')
-url='http://typeof.net/Iosevka/'
+url='http://typeof.net/Iosevka'
 license=('custom:OFL')
 depends=('fontconfig' 'xorg-font-utils')
 source=("https://github.com/be5invis/Iosevka/releases/download/v${pkgver}/01-iosevka-${pkgver}.zip"
@@ -15,6 +15,7 @@ sha256sums=('f0c80e0a541da8a7fbe80ccbc4ac1be376e09fbbd2e07ce6229b8781d68b6138'
 
 package() {
 	cd "${srcdir}"
+
 	install -dm755 "${pkgdir}/usr/share/fonts/TTF"
 	install -dm755 "${pkgdir}/usr/share/licenses/${pkgname}"
 
