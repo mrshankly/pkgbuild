@@ -1,0 +1,25 @@
+# Maintainer: mrshankly <nonexistant@email.invalid>
+
+pkgname=leque
+pkgver=1.2.0
+pkgrel=1
+pkgdesc='AMDGPU fan controller'
+arch=('x86_64')
+license=('custom:CC0')
+source=("${pkgname}-${pkgver}.tar.gz"
+        "${pkgname}.service")
+sha256sums=('5935ed1e281ea6a4cf66d749484a871789235960d64c14c5fff2bc0d19e603bc'
+            '830cbc3c40a35a8d2ad84f6c939db71e985042f02dc2a26e49733156dd2e1884')
+
+build() {
+  cd "${pkgname}"
+  make
+}
+
+package() {
+  cd "${srcdir}/${pkgname}"
+
+  install -Dm755 leque "${pkgdir}/usr/bin/leque"
+  install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+  install -Dm644 ../leque.service "${pkgdir}/usr/lib/systemd/system/leque.service"
+}

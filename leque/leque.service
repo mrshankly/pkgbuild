@@ -1,0 +1,10 @@
+[Unit]
+Description=AMDGPU fan controller
+
+[Service]
+Type=exec
+Restart=always
+ExecStart=/usr/bin/leque
+
+[Install]
+WantedBy=multi-user.target
