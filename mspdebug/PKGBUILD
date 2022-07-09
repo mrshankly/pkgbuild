@@ -1,0 +1,30 @@
+# Maintainer: mrshankly <nonexistant@email.invalid>
+
+_pkgname=mspdebug
+pkgname=mspdebug-git
+pkgver=v0.25.r89.g985b390
+pkgrel=1
+pkgdesc='Debugging tool for MSP430 MCUs'
+arch=('x86_64')
+url="https://dlbeer.co.nz/${_pkgname}"
+license=('GPL2')
+depends=('libusb-compat' 'readline')
+source=("${pkgname}::git+https://github.com/dlbeer/${_pkgname}.git")
+sha256sums=('SKIP')
+provides=("${_pkgname}=${pkgver}-${pkgrel}")
+conflicts=("${_pkgname}")
+
+pkgver() {
+  cd "${pkgname}"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd "${pkgname}"
+  make PREFIX=/usr
+}
+
+package() {
+  cd "${pkgname}"
+  make PREFIX=/usr DESTDIR="${pkgdir}" install
+}
