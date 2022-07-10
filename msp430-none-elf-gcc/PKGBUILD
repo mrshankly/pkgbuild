@@ -1,0 +1,104 @@
+# Maintainer: mrshankly <nonexistant@email.invalid>
+# Based on the PKGBUILD file for the package arm-none-eabi-gcc.
+
+_target=msp430-none-elf
+_pkgname=gcc
+pkgname="${_target}-${_pkgname}"
+pkgver=12.1.0
+pkgrel=1
+pkgdesc='The GNU Compiler Collection - cross compiler for the MSP430 MCUs'
+arch=('x86_64')
+url="https://gcc.gnu.org/"
+license=('GPL' 'LGPL' 'FDL')
+depends=("${_target}-binutils" 'zlib' 'libmpc' 'libisl' 'zstd')
+makedepends=('gmp' 'mpfr')
+options=(!emptydirs !strip !lto)
+source=("https://ftp.gnu.org/gnu/${_pkgname}/${_pkgname}-${pkgver}/${_pkgname}-${pkgver}.tar.xz")
+sha256sums=('62fd634889f31c02b64af2c468f064b47ad1ca78411c45abe6ac4b5f8dd19c7b')
+
+prepare() {
+  cd "${_pkgname}-${pkgver}"
+
+  echo "${pkgver}" > gcc/BASE-VER
+
+  rm -rf "${srcdir}/build-gcc"
+  mkdir "${srcdir}/build-gcc"
+}
+
+build() {
+  # Credits @allanmcrae
+  # https://github.com/allanmcrae/toolchain/blob/f18604d70c5933c31b51a320978711e4e6791cf1/gcc/PKGBUILD
+  # TODO: properly deal with the build issues resulting from this
+  CFLAGS=${CFLAGS/-Werror=format-security/}
+  CXXFLAGS=${CXXFLAGS/-Werror=format-security/}
+
+  cd "${srcdir}/build-gcc"
+  export CFLAGS_FOR_TARGET='-g -Os -ffunction-sections -fdata-sections'
+  export CXXFLAGS_FOR_TARGET='-g -Os -ffunction-sections -fdata-sections'
+
+  "${srcdir}/${_pkgname}-${pkgver}"/configure \
+    --target="${_target}"                     \
+    --with-sysroot="/usr/${_target}"          \
+    --prefix=/usr                             \
+    --libexecdir=/usr/lib                     \
+    --enable-languages=c                      \
+    --enable-plugins                          \
+    --enable-lto                              \
+    --disable-decimal-float                   \
+    --disable-libffi                          \
+    --disable-libgomp                         \
+    --disable-libmudflap                      \
+    --disable-libquadmath                     \
+    --disable-libssp                          \
+    --disable-libstdcxx-pch                   \
+    --disable-nls                             \
+    --disable-shared                          \
+    --disable-threads                         \
+    --disable-tls                             \
+    --without-headers                         \
+    --with-newlib                             \
+    --with-gnu-as                             \
+    --with-gnu-ld                             \
+    --with-system-zlib                        \
+    --with-gmp                                \
+    --with-mpfr                               \
+    --with-mpc                                \
+    --with-isl                                \
+    --with-libelf
+
+  make INHIBIT_LIBC_CFLAGS='-DUSE_TM_CLONE_REGISTRY=0'
+}
+
+package() {
+  cd "${srcdir}/build-gcc"
+
+  make DESTDIR="${pkgdir}" install -j1
+
+  # Strip target binaries.
+  find "${pkgdir}/usr/lib/gcc/${_target}/${pkgver}" \
+    -type f                                         \
+    -and \( -name "*.a" -or -name "*.o" \)          \
+    -exec "${_target}-objcopy"                      \
+      -R .comment                                   \
+      -R .note                                      \
+      -R .debug_info                                \
+      -R .debug_aranges                             \
+      -R .debug_pubnames                            \
+      -R .debug_pubtypes                            \
+      -R .debug_abbrev                              \
+      -R .debug_line                                \
+      -R .debug_str                                 \
+      -R .debug_ranges                              \
+      -R .debug_loc '{}' \;
+
+  # Strip host binaries.
+  find "${pkgdir}/usr/bin/" "${pkgdir}/usr/lib/gcc/${_target}/${pkgver}" \
+    -type f                                                              \
+    -and \( -executable \)                                               \
+    -exec strip '{}' \;
+
+  # Remove conflicting files with host gcc.
+  rm -rf "${pkgdir}"/usr/share/info
+  rm -rf "${pkgdir}"/usr/share/man/man7
+  rm  -f "${pkgdir}"/usr/lib/libcc1.*
+}

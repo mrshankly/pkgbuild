@@ -1,0 +1,58 @@
+# Maintainer: mrshankly <nonexistant@email.invalid>
+# Based on the PKGBUILD file for the package arm-none-eabi-binutils.
+
+_target=msp430-none-elf
+_pkgname=binutils
+pkgname="${_target}-${_pkgname}"
+pkgver=2.38
+pkgrel=1
+pkgdesc='A collection of binary tools for the MSP430 MCUs'
+arch=('x86_64')
+url="https://www.gnu.org/software/${_pkgname}"
+license=('GPL')
+depends=('zlib')
+source=("https://ftp.gnu.org/gnu/${_pkgname}/${_pkgname}-${pkgver}.tar.xz")
+sha256sums=('e316477a914f567eccc34d5d29785b8b0f5a10208d36bbacedcc39048ecfe024')
+
+prepare() {
+  rm -rf "${srcdir}/build-binutils"
+  mkdir "${srcdir}/build-binutils"
+}
+
+check() {
+  cd "${srcdir}/build-binutils"
+  make LDFLAGS="" -k check || true
+}
+
+build() {
+  cd "${srcdir}/build-binutils"
+
+  "${srcdir}/${_pkgname}-${pkgver}/configure" \
+    --target="${_target}"                     \
+    --with-sysroot="/usr/${_target}"          \
+    --prefix=/usr                             \
+    --with-gnu-as                             \
+    --with-gnu-ld                             \
+    --with-system-zlib                        \
+    --enable-deterministic-archives           \
+    --enable-gold                             \
+    --enable-ld=default                       \
+    --enable-lto                              \
+    --enable-multilib                         \
+    --enable-plugins                          \
+    --disable-nls                             \
+    --disable-werror
+
+  make
+}
+
+package() {
+  cd "${srcdir}/build-binutils"
+
+  make DESTDIR="${pkgdir}" install -j1
+
+  # Remove conflicting files with host binutils and MS Windows tools.
+  rm -rf "${pkgdir}"/usr/share/info
+  rm  -f "${pkgdir}"/usr/lib/bfd-plugins/libdep.so
+  rm  -f "${pkgdir}"/usr/share/man/man1/msp430-none-elf-{dlltool,windres,windmc}*
+}

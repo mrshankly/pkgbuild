@@ -1,0 +1,74 @@
+# Maintainer: mrshankly <nonexistant@email.invalid>
+# Based on the PKGBUILD file for the package arm-none-eabi-newlib.
+
+_target=msp430-none-elf
+_pkgname=newlib
+pkgname="${_target}-${_pkgname}"
+pkgver=4.2.0.20211231
+pkgrel=1
+pkgdesc='C standard library for the MSP430 MCUs'
+arch=('x86_64')
+url="https://www.sourceware.org/newlib/"
+license=('BSD')
+makedepends=("${_target}-gcc")
+options=(!emptydirs !strip)
+source=("https://sourceware.org/pub/newlib/newlib-${pkgver}.tar.gz")
+sha256sums=('c3a0e8b63bc3bef1aeee4ca3906b53b3b86c8d139867607369cb2915ffc54435')
+
+prepare() {
+  rm -rf "${srcdir}/build-newlib"
+  mkdir "${srcdir}/build-newlib"
+}
+
+build() {
+  cd "${srcdir}/build-newlib"
+
+  export CFLAGS_FOR_TARGET='-g -Os -ffunction-sections -fdata-sections'
+
+  "${srcdir}/newlib-${pkgver}/configure" \
+    --target="${_target}"                \
+    --prefix=/usr                        \
+    --enable-multilib                    \
+    --enable-newlib-reent-small          \
+    --enable-newlib-nano-malloc          \
+    --enable-target-optspace             \
+    --enable-lite-exit                   \
+    --enable-newlib-global-atexit        \
+    --enable-newlib-nano-formatted-io    \
+    --enable-newlib-retargetable-locking \
+    --disable-newlib-fwrite-in-streamio  \
+    --disable-newlib-fseek-optimization  \
+    --disable-newlib-wide-orient         \
+    --disable-newlib-unbuf-stream-opt    \
+    --disable-newlib-multithread         \
+    --disable-newlib-io-float            \
+    --disable-newlib-supplied-syscalls   \
+    --disable-nls
+
+  make
+}
+
+package() {
+  cd "${srcdir}/build-newlib"
+
+  make DESTDIR="${pkgdir}" install -j1
+
+  find "${pkgdir}/usr/${_target}/lib"      \
+    -type f                                \
+    -and \( -name "*.a" -or -name "*.o" \) \
+    -exec "${_target}-objcopy"             \
+      -R .comment                          \
+      -R .note                             \
+      -R .debug_info                       \
+      -R .debug_aranges                    \
+      -R .debug_pubnames                   \
+      -R .debug_pubtypes                   \
+      -R .debug_abbrev                     \
+      -R .debug_line                       \
+      -R .debug_str                        \
+      -R .debug_ranges                     \
+      -R .debug_loc '{}' \;
+
+  install -dm755 "${pkgdir}/usr/share/licenses/${pkgname}/"
+  install -m644 -t "${pkgdir}/usr/share/licenses/${pkgname}/" "${srcdir}/newlib-${pkgver}/COPYING"
+}
