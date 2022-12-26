@@ -1,0 +1,18 @@
+# Maintainer: mrshankly <nonexistant@email.invalid>
+
+pkgname=flyctl
+pkgver=0.0.441
+pkgrel=1
+pkgdesc='Command line tools for fly.io services'
+arch=('x86_64')
+url="https://github.com/superfly/${pkgname}"
+license=('Apache')
+source=("https://github.com/superfly/${pkgname}/releases/download/v${pkgver}/flyctl_${pkgver}_Linux_x86_64.tar.gz")
+sha256sums=('fc1cfd45a9ec706ebe200c226ecf27f8cc852c43b028a8c6ae4e3e9edca3f66f')
+provides=("${pkgname}")
+conflicts=("${pkgname}")
+
+package() {
+  cd "${srcdir}"
+  install -Dm755 flyctl "${pkgdir}/usr/bin/${pkgname}" 
+}
