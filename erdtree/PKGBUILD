@@ -1,0 +1,29 @@
+# Maintainer: mrshankly <nonexistant@email.invalid>
+
+pkgname=erdtree
+pkgver=1.2.0
+pkgrel=1
+pkgdesc='A multi-threaded file-tree visualizer and disk usage analyzer'
+arch=('x86_64')
+url='https://github.com/solidiquis/erdtree'
+license=('MIT')
+makedepends=('cargo')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/solidiquis/${pkgname}/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=('5114f694d2430374ce4d251613e16acfa1e5d34a911306062cdb43f7f6544ea9')
+
+build() {
+  cd "${pkgname}-${pkgver}"
+  cargo build --release --locked
+}
+
+check() {
+  cd "${pkgname}-${pkgver}"
+  cargo test --release --locked
+}
+
+package() {
+  cd "${pkgname}-${pkgver}"
+  install -Dm755 target/release/et "${pkgdir}/usr/bin/et"
+  install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+  install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}
